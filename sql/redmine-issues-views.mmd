@@ -1,0 +1,74 @@
+---
+references:
+  - "File: /ws/adp/redmine-fs/sql/main_views.sql"
+generationTime: 2026-08-23T10:01:57.893Z
+---
+classDiagram
+    class Issue {
+        +int id
+        +int project_id
+        +int tracker_id
+        +int category_id
+        +int status_id
+        +int author_id
+        +String subject
+        +String description
+        +Date created_on
+        +Date updated_on
+    }
+    
+    class Project {
+        +int id
+        +String name
+        +int parent_id
+        +String description
+    }
+    
+    class Tracker {
+        +int id
+        +String name
+    }
+    
+    class IssueCategory {
+        +int id
+        +String name
+    }
+    
+    class IssueStatus {
+        +int id
+        +String name
+        +boolean is_closed
+    }
+    
+    class User {
+        +int id
+        +String login
+        +String firstname
+        +String lastname
+        +String mail_notification
+        +String mail
+    }
+    
+    class RedmineIssuesView {
+        +Issue issue
+        +Project project
+        +Tracker tracker
+        +IssueCategory category
+        +IssueStatus status
+        +User author
+        +User assignee
+        +getIssueDetails() Issue
+    }
+    
+    Issue "1" --> "1" Project : belongs to
+    Issue "1" --> "1" Tracker : categorized by
+    Issue "1" --> "1" IssueCategory : has
+    Issue "1" --> "1" IssueStatus : has status
+    Issue "1" --> "1" User : created by
+    Issue "1" --> "0..1" User : assigned to
+    RedmineIssuesView "1" --> "1" Issue : views
+    RedmineIssuesView "1" --> "1" Project : aggregates
+    RedmineIssuesView "1" --> "1" Tracker : aggregates
+    RedmineIssuesView "1" --> "1" IssueCategory : aggregates
+    RedmineIssuesView "1" --> "1" IssueStatus : aggregates
+    RedmineIssuesView "1" --> "*" User : references
