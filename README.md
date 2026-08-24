@@ -21,7 +21,7 @@ In the resulting JSON:
 | `generate-jstree-json.sh` | Launcher script: compiles (if needed) and runs the Java tool |
 | `main_example_launch.sh` | Quick-and-dirty example invocation, see below |
 | `jstree-projects-issues.json` | Generated output (default location) — data ready for jsTree |
-| `output/jstree-demo.html` | Example page that loads the JSON and renders the tree with jsTree |
+| `web/jstree-demo.html` | Example page that loads the JSON and renders the tree with jsTree |
 
 ## Usage
 
@@ -88,7 +88,8 @@ bug.
 
 ## Quick and dirty
 
-To regenerate the JSON with a single command, without remembering paths/arguments:
+To run the full pipeline — fresh export from PostgreSQL, JSON generation,
+and a local server to view the result — with a single command:
 
 ```bash
 ./main_example_launch.sh
@@ -97,28 +98,35 @@ To regenerate the JSON with a single command, without remembering paths/argument
 Equivalent to:
 
 ```bash
-./generate-jstree-json.sh --prune-empty-projects ./sql/redmine_production_projects.tsv ./sql/redmine-issues.tsv output/jstree-projects-issues.json
+./export-redmine-issues.sh sql/redmine_issues.sql sql/redmine_projects.sql
+./generate-jstree-json.sh --prune-empty-projects ./output/redmine_projects.tsv ./output/redmine_issues.tsv web/jstree-projects-issues.json
+python3 -m http.server 8000 --directory web
 ```
 
 Must be launched from the project root (`redmine-fs/`), since it uses
-relative paths (`./sql/...`, `output/...`). Output goes to
-`output/jstree-projects-issues.json` (not the root, as with
-`./generate-jstree-json.sh` with no arguments), and empty projects are
-pruned (see [Pruning empty projects](#pruning-empty-projects) above).
-`output/` already contains a copy of `jstree-demo.html` for viewing the
-generated tree — the same local server note below applies.
+relative paths (`./sql/...`, `./output/...`, `web/...`). Steps:
+
+1. `export-redmine-issues.sh` connects to PostgreSQL (see
+   [Exporting fresh data from PostgreSQL](#exporting-fresh-data-from-postgresql)
+   below) and writes `output/redmine_issues.tsv` and `output/redmine_projects.tsv`.
+2. `generate-jstree-json.sh` reads those two TSVs, prunes empty projects
+   (see [Pruning empty projects](#pruning-empty-projects) above), and writes
+   `web/jstree-projects-issues.json`.
+3. `python3 -m http.server 8000 --directory web` serves `web/` — this is
+   the last step and blocks in the foreground (`Ctrl-C` to stop); run it in
+   the background (append `&`, or open another terminal) if you want the
+   shell back.
 
 ### Viewing the result
 
-`output/jstree-demo.html` loads `jstree-projects-issues.json` via AJAX from
-the same directory it's in — so it expects the JSON to be inside `output/`
-too (as `main_example_launch.sh` produces). Open the page from a local
-server (not by double-clicking / `file://`, or the browser will block the
-fetch due to CORS):
+`web/jstree-demo.html` loads `jstree-projects-issues.json` via AJAX from the
+same directory it's in, so both files must be served from `web/` together
+(as `main_example_launch.sh` does) — opening the page by double-clicking /
+`file://` won't work, the browser blocks the fetch due to CORS. With the
+server from step 3 above still running, open:
 
-```bash
-python3 -m http.server 8000
-# then open http://localhost:8000/output/jstree-demo.html
+```
+http://localhost:8000/jstree-demo.html
 ```
 
 ## Exporting fresh data from PostgreSQL
